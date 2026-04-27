@@ -1,0 +1,1 @@
+<h2>Landing Page — Dev C đang xây dựng...</h2>

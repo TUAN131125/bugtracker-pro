@@ -1,0 +1,96 @@
+/* ── Variables ── */
+:root {
+  --primary: #0078d4;
+  --navy: #1e3a5f;
+  --success: #28a745;
+  --warning: #fd7e14;
+  --danger: #dc3545;
+  --sidebar-w: 220px;
+}
+
+/* ── Global ── */
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* ── Navbar ── */
+.navbar-brand {
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+}
+
+/* ── Sidebar active link ── */
+.nav-pills .nav-link.active {
+  background: var(--primary);
+}
+.nav-pills .nav-link:hover:not(.active) {
+  background: #f0f4f8;
+}
+
+/* ── Cards ── */
+.card {
+  border-radius: 8px;
+  border-color: #e0e7ef;
+}
+.card:hover {
+  box-shadow: 0 2px 12px rgba(0, 120, 212, 0.1);
+  transition: 0.2s;
+}
+
+/* ── Badge priority ── */
+.badge-critical {
+  background: #dc3545;
+  color: #fff;
+}
+.badge-high {
+  background: #fd7e14;
+  color: #fff;
+}
+.badge-medium {
+  background: #ffc107;
+  color: #333;
+}
+.badge-low {
+  background: #28a745;
+  color: #fff;
+}
+.badge-trivial {
+  background: #6c757d;
+  color: #fff;
+}
+
+/* ── Status badges ── */
+.badge-open {
+  background: #0078d4;
+  color: #fff;
+}
+.badge-in_progress {
+  background: #fd7e14;
+  color: #fff;
+}
+.badge-review {
+  background: #6a1b9a;
+  color: #fff;
+}
+.badge-resolved {
+  background: #28a745;
+  color: #fff;
+}
+.badge-closed {
+  background: #6c757d;
+  color: #fff;
+}
+
+/* ── Flash messages ── */
+.alert {
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 991px) {
+  main {
+    padding: 1rem !important;
+  }
+}
