@@ -30,6 +30,8 @@ spl_autoload_register(function($className) {
 // Load cấu hình
 require_once APP_PATH . '/Config/app.php';
 require_once APP_PATH . '/Config/database.php';
+// Thêm vào index.php sau phần require Config
+require_once APP_PATH . '/Helpers/functions.php';
 
 // Load Router và chạy
 require_once APP_PATH . '/Router.php';

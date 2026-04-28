@@ -1,7 +1,9 @@
 <?php
 define('APP_NAME',    'BugTracker Pro');
 define('APP_VERSION', '1.0.0');
-define('APP_URL',     'https://bugtracker.kesug.com/'); // đổi thành URL InfinityFree khi deploy
+// Tự động detect local hay production
+$isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
+define('APP_URL', $isLocal ? 'http://localhost/bugtracker-pro' : 'https://bugtracker.kesug.com');
 
 define('SESSION_LIFETIME', 7200);    // 2 giờ (giây)
 define('MAX_LOGIN_ATTEMPTS', 5);

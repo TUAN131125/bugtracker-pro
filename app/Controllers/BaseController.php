@@ -91,11 +91,26 @@ class BaseController {
     }
 
     protected function viewAuth(string $viewPath, array $data = []): void {
-    extract($data);
-    $viewFile = APP_PATH . '/Views/pages/' . $viewPath . '.php';
-    ob_start();
-    require $viewFile;
-    $content = ob_get_clean();
-    require APP_PATH . '/Views/layouts/auth.php';
-}
+        extract($data);
+        $viewFile = APP_PATH . '/Views/pages/' . $viewPath . '.php';
+        ob_start();
+        require $viewFile;
+        $content = ob_get_clean();
+        require APP_PATH . '/Views/layouts/auth.php';
+    }
+
+    protected function viewFull(string $viewPath, array $data = []): void {
+        extract($data);
+        require APP_PATH . '/Views/pages/' . $viewPath . '.php';
+    }
+
+    // Render landing page — không layout, không sidebar, file nằm thẳng trong /Views/
+    protected function viewLanding(string $viewPath, array $data = []): void {
+        extract($data);
+        $viewFile = APP_PATH . '/Views/' . $viewPath . '.php';
+        if (!file_exists($viewFile)) {
+            die("Landing view không tìm thấy: $viewPath");
+        }
+        require $viewFile;
+    }
 }
