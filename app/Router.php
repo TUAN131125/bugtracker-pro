@@ -35,6 +35,11 @@ class Router {
         $this->add('GET',  '/profile',           'UserController',    'profile');
         $this->add('GET',  '/settings',          'UserController',    'settings');
         $this->add('GET',  '/admin',             'AdminController',   'index');
+
+        // AJAX routes — check realtime
+        $this->add('GET',  '/api/check-email',    'AuthController', 'checkEmail');
+        $this->add('GET',  '/api/check-username', 'AuthController', 'checkUsername');
+        $this->add('POST', '/api/slug-from-name', 'AuthController', 'slugFromName');
     }
 
     private function add(string $method, string $path, string $controller, string $action): void {
