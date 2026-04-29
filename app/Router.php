@@ -40,6 +40,18 @@ class Router {
         $this->add('GET',  '/api/check-email',    'AuthController', 'checkEmail');
         $this->add('GET',  '/api/check-username', 'AuthController', 'checkUsername');
         $this->add('POST', '/api/slug-from-name', 'AuthController', 'slugFromName');
+
+        // ── Dashboard ──
+        $this->add('GET', '/dashboard', 'DashboardController', 'index');
+
+        // ── Projects ──
+        $this->add('GET',  '/projects',                   'ProjectController', 'index');
+        $this->add('GET',  '/projects/new',               'ProjectController', 'createForm');
+        $this->add('POST', '/projects/new',               'ProjectController', 'create');
+        $this->add('GET',  '/projects/:key',              'ProjectController', 'show');
+        $this->add('GET',  '/projects/:key/settings',     'ProjectController', 'settings');
+        $this->add('POST', '/projects/:key/settings',     'ProjectController', 'saveSettings');
+        $this->add('POST', '/projects/:key/delete',       'ProjectController', 'delete');
     }
 
     private function add(string $method, string $path, string $controller, string $action): void {
