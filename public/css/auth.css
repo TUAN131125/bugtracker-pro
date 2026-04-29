@@ -1,0 +1,65 @@
+/* Auth pages styling */
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a2332;
+}
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #d0d8e4;
+  font-size: 14px;
+}
+.form-control:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
+}
+
+.input-group-text {
+  border-radius: 0;
+  background: #f5f8fc;
+  border: 1px solid #d0d8e4;
+}
+.input-group > .form-control:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.input-group > .btn {
+  border-radius: 0 8px 8px 0;
+}
+
+.btn-primary {
+  background: #0078d4;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: #005fa3;
+}
+.btn-outline-secondary {
+  border: 1px solid #d0d8e4;
+  border-radius: 8px;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 13px;
+}
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+.is-valid {
+  border-color: #28a745 !important;
+  background-color: #fff;
+}
+
+.progress {
+  background: #e8ecf0;
+  border-radius: 4px;
+}
+.progress-bar {
+  border-radius: 4px;
+}
+
+.alert {
+  border-radius: 8px;
+}
