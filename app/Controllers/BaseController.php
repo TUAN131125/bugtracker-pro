@@ -90,15 +90,6 @@ class BaseController {
         unset($_SESSION['csrf_token']);
     }
 
-    protected function viewAuth(string $viewPath, array $data = []): void {
-        extract($data);
-        $viewFile = APP_PATH . '/Views/pages/' . $viewPath . '.php';
-        ob_start();
-        require $viewFile;
-        $content = ob_get_clean();
-        require APP_PATH . '/Views/layouts/auth.php';
-    }
-
     protected function viewFull(string $viewPath, array $data = []): void {
         extract($data);
         require APP_PATH . '/Views/pages/' . $viewPath . '.php';
@@ -112,5 +103,17 @@ class BaseController {
             die("Landing view không tìm thấy: $viewPath");
         }
         require $viewFile;
+    }
+
+    protected function viewAuth(string $viewPath, array $data = []): void {
+        extract($data);
+        $viewFile = APP_PATH . '/Views/pages/' . $viewPath . '.php';
+        if (!file_exists($viewFile)) {
+            die("View auth không tìm thấy: $viewPath");
+        }
+        ob_start();
+        require $viewFile;
+        $content = ob_get_clean();
+        require APP_PATH . '/Views/layouts/auth.php';
     }
 }

@@ -19,12 +19,19 @@ class AuthController extends BaseController {
             $this->redirect('/dashboard');
         }
 
+        // Tạo captcha số cho register
+        $n1 = rand(1, 9);
+        $n2 = rand(1, 9);
+        $_SESSION['captcha_sum'] = $n1 + $n2;
+
         $this->viewAuth('auth/register', [
-            'title'      => 'Tạo tài khoản — BugTracker Pro',
-            'step'       => 1,
-            'csrf_token' => $this->generateCsrfToken(),
-            'errors'     => $_SESSION['reg_errors'] ?? [],
-            'old'        => $_SESSION['reg_old']    ?? [],
+            'title'       => 'Tạo tài khoản — BugTracker Pro',
+            'step'        => 1,
+            'csrf_token'  => $this->generateCsrfToken(),
+            'captcha_n1'  => $n1,
+            'captcha_n2'  => $n2,
+            'errors'      => $_SESSION['reg_errors'] ?? [],
+            'old'         => $_SESSION['reg_old']    ?? [],
         ]);
 
         // Xóa sau khi đã truyền vào view
