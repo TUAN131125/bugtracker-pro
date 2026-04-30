@@ -52,6 +52,24 @@ class Router {
         $this->add('GET',  '/projects/:key/settings',     'ProjectController', 'settings');
         $this->add('POST', '/projects/:key/settings',     'ProjectController', 'saveSettings');
         $this->add('POST', '/projects/:key/delete',       'ProjectController', 'delete');
+
+        // ── Issues ──
+        $this->add('GET',  '/projects/:key/issues/new', 'BugController', 'createForm');
+        $this->add('POST', '/projects/:key/issues/new', 'BugController', 'create');
+        $this->add('GET',  '/issues/:key',              'BugController', 'show');
+        $this->add('GET',  '/issues/:key/edit',         'BugController', 'editForm');
+        $this->add('POST', '/issues/:key/edit',         'BugController', 'update');
+        $this->add('POST', '/issues/:key/delete',       'BugController', 'delete');
+
+        // ── Issue AJAX actions ──
+        $this->add('POST', '/issues/:key/comment',      'BugController', 'addComment');
+        $this->add('POST', '/issues/:key/attach',       'BugController', 'addAttachment');
+        $this->add('POST', '/issues/:key/status',       'BugController', 'changeStatus');
+        $this->add('POST', '/issues/:key/vote',         'BugController', 'vote');
+
+        // ── Delete actions ──
+        $this->add('POST', '/comments/:id/delete',      'BugController', 'deleteComment');
+        $this->add('POST', '/attachments/:id/delete',   'BugController', 'deleteAttachment');
     }
 
     private function add(string $method, string $path, string $controller, string $action): void {
