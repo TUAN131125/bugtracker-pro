@@ -1,4 +1,10 @@
-<?php $old = $old ?? []; $errors = $errors ?? []; ?>
+<?php 
+$project    = $project    ?? [];
+$members    = $members    ?? [];
+$csrf_token = $csrf_token ?? '';
+$errors     = $errors     ?? [];
+$old        = $old        ?? []; 
+?>
 
 <div class="d-flex align-items-center gap-2 mb-4">
     <a href="<?= APP_URL ?>/projects/<?= e(strtolower($project['key'])) ?>"

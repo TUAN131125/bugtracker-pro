@@ -1,5 +1,9 @@
 <?php
-// $stats, $myBugs, $recentActivity, $projects, $upcomingDeadlines
+$stats             = $stats             ?? [];
+$myBugs            = $myBugs            ?? [];
+$recentActivity    = $recentActivity    ?? [];
+$projects          = $projects          ?? [];
+$upcomingDeadlines = $upcomingDeadlines ?? [];
 ?>
 
 <h4 class="fw-bold mb-4">

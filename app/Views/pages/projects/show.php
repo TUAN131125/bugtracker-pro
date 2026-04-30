@@ -1,6 +1,18 @@
 <?php
-// $project, $bugs, $filters, $page, $totalPages,
-// $totalBugs, $stats, $members truyền từ ProjectController
+$project    = $project    ?? [];
+$bugs       = $bugs       ?? [];
+$stats      = $stats      ?? [];
+$members    = $members    ?? [];
+$filters    = array_merge([
+    'search'   => '',
+    'status'   => '',
+    'priority' => '',
+    'type'     => '',
+    'sort'     => 'newest',
+], $filters ?? []);
+$page       = $page       ?? 1;
+$totalPages = $totalPages ?? 1;
+$totalBugs  = $totalBugs  ?? 0;
 ?>
 
 <!-- Stats bar -->

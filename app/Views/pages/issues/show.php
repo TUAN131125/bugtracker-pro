@@ -1,7 +1,15 @@
 <?php
-// $bug, $comments, $activities, $attachments, $linkedIssues truyền từ BugController
-$canEdit = in_array($_SESSION['user_role'] ?? '', ['admin','manager','developer']);
+
+$bug          = $bug          ?? [];
+$comments     = $comments     ?? [];
+$activities   = $activities   ?? [];
+$attachments  = $attachments  ?? [];
+$linkedIssues = $linkedIssues ?? [];
+$csrf_token   = $csrf_token   ?? '';
+
+$canEdit   = in_array($_SESSION['user_role'] ?? '', ['admin','manager','developer']);
 $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
+
 ?>
 
 <link rel="stylesheet" href="<?= APP_URL ?>/public/css/issue.css">
@@ -62,7 +70,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
             <?php if ($canDelete): ?>
             <button class="btn-action danger"
                     data-confirm="Bạn chắc chắn muốn xóa issue này?"
-                    onclick="deleteIssue(<?= $bug['id'] ?>)">
+                    onclick="deleteIssue()">
                 <i class="fa fa-trash"></i> Xóa
             </button>
             <?php endif; ?>
@@ -183,7 +191,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                              class="comment-avatar" alt="">
                         <?php else: ?>
                         <div class="comment-avatar">
-                            <?= mb_strtoupper(mb_substr($comment['user_name'], 0, 1)) ?>
+                            <?= e(mb_strtoupper(mb_substr($comment['user_name'], 0, 1))) ?>
                         </div>
                         <?php endif; ?>
 
@@ -198,7 +206,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                             <div class="comment-content">
                                 <?= parseMarkdown($comment['content']) ?>
                             </div>
-                            <?php if ($_SESSION['user_id'] == $comment['user_id'] || $canEdit): ?>
+                            <?php if ((isset($_SESSION['user_id']) && $_SESSION['user_id'] == $comment['user_id']) || $canEdit): ?>
                             <div class="comment-actions">
                                 <button class="comment-action-btn"
                                         onclick="editComment(<?= $comment['id'] ?>)">
@@ -224,8 +232,9 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                 <!-- Form thêm comment -->
                 <form method="POST"
                       action="<?= APP_URL ?>/issues/<?= e($bug['issue_key']) ?>/comment"
-                      id="commentForm">
-                    <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
+                      id="commentForm"
+                      onsubmit="return submitComment(event)">
+                    <input type="hidden" name="csrf_token" value="<?= e($csrf_token ?? '') ?>">
                     <div class="comment-editor">
                         <div class="comment-editor-toolbar">
                             <button type="button" class="editor-btn" onclick="wrapText('**','**')" title="Bold">
@@ -284,7 +293,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                     <div class="activity-dot <?= $dotColor ?>"></div>
                     <div>
                         <strong><?= e($act['user_name']) ?></strong>
-                        <?= $actionLabel ?>
+                        <?= e($actionLabel) ?>
                         <?php if (!empty($act['new_value'])): ?>
                         <?php $newVal = json_decode($act['new_value'], true); ?>
                         <?php if (isset($newVal['status'])): ?>
@@ -355,8 +364,9 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                 <form method="POST"
                       action="<?= APP_URL ?>/issues/<?= e($bug['issue_key']) ?>/attach"
                       enctype="multipart/form-data"
-                      id="attachForm">
-                    <input type="hidden" name="csrf_token" value="<?= e($csrf_token) ?>">
+                      id="attachForm"
+                      onsubmit="return submitAttachment(event)">
+                    <input type="hidden" name="csrf_token" value="<?= e($csrf_token ?? '') ?>">
                     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
                         <i class="fa fa-cloud-upload-alt d-block mb-2"></i>
                         <p>Kéo thả file vào đây hoặc <strong>click để chọn</strong></p>
@@ -425,6 +435,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
                 foreach ($statuses as $val => [$color, $label]):
                 ?>
                 <div class="status-option <?= $bug['status'] === $val ? 'active' : '' ?>"
+                     data-status="<?= $val ?>"
                      style="color:<?= $color ?>; background:<?= $color ?>18;"
                      onclick="changeStatus('<?= $val ?>')">
                     <?= $label ?>
@@ -480,7 +491,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
             <?php if (!empty($bug['estimated_hours'])): ?>
             <div class="meta-row">
                 <span class="meta-label"><i class="fa fa-clock me-1"></i>Ước tính</span>
-                <span class="meta-value"><?= $bug['estimated_hours'] ?>h</span>
+                <span class="meta-value"><?= e($bug['estimated_hours']) ?>h</span>
             </div>
             <?php endif; ?>
 
@@ -488,7 +499,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
             <?php if (!empty($bug['actual_hours'])): ?>
             <div class="meta-row">
                 <span class="meta-label"><i class="fa fa-stopwatch me-1"></i>Thực tế</span>
-                <span class="meta-value"><?= $bug['actual_hours'] ?>h</span>
+                <span class="meta-value"><?= e($bug['actual_hours']) ?>h</span>
             </div>
             <?php endif; ?>
 
@@ -516,7 +527,7 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="voteIssue()">
                     <i class="fa fa-thumbs-up me-1"></i>
-                    Vote (<span id="voteCount"><?= $bug['votes'] ?></span>)
+                    Vote (<span id="voteCount"><?= e((string)($bug['votes'] ?? 0)) ?></span>)
                 </button>
                 <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="watchIssue()">
                     <i class="fa fa-eye me-1"></i>Watch
@@ -530,7 +541,11 @@ $canDelete = in_array($_SESSION['user_role'] ?? '', ['admin','manager']);
 <script>
 const ISSUE_KEY  = '<?= e($bug['issue_key']) ?>';
 const APP_URL    = '<?= APP_URL ?>';
-const CSRF_TOKEN = '<?= e($csrf_token) ?>';
+const CSRF_TOKEN = '<?= e($csrf_token ?? '') ?>';
+
+if (!CSRF_TOKEN || CSRF_TOKEN.trim() === '') {
+    console.warn('CSRF_TOKEN not provided from server');
+}
 
 // ── TABS ──
 document.querySelectorAll('.issue-tab').forEach(tab => {
@@ -573,23 +588,36 @@ function changeStatus(newStatus) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'status=' + newStatus + '&csrf_token=' + encodeURIComponent(CSRF_TOKEN)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error('Server error: ' + r.status);
+        return r.json();
+    })
     .then(data => {
         if (data.success) {
-            // Update UI không cần reload
+            // Update UI: so sánh với data-status attribute
             document.querySelectorAll('.status-option').forEach(el => {
-                el.classList.toggle('active', el.textContent.trim().toLowerCase() === newStatus.replace('_',' '));
+                const isActive = el.getAttribute('data-status') === newStatus;
+                el.classList.toggle('active', isActive);
             });
             showToast('Đã đổi status thành công!', 'success');
+        } else {
+            showToast(data.error || 'Không thể đổi status', 'danger');
         }
     })
-    .catch(() => showToast('Có lỗi xảy ra!', 'danger'));
+    .catch(err => {
+        console.error('Error changing status:', err);
+        showToast('Có lỗi xảy ra: ' + err.message, 'danger');
+    });
 }
 
 // ── COPY LINK ──
 function copyIssueLink() {
     navigator.clipboard.writeText(window.location.href)
-        .then(() => showToast('Đã copy link!', 'success'));
+        .then(() => showToast('Đã copy link!', 'success'))
+        .catch(err => {
+            console.error('Clipboard error:', err);
+            showToast('Không thể copy link', 'danger');
+        });
 }
 
 // ── VOTE ──
@@ -599,11 +627,19 @@ function voteIssue() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error('Server error: ' + r.status);
+        return r.json();
+    })
     .then(data => {
         if (data.votes !== undefined) {
             document.getElementById('voteCount').textContent = data.votes;
+            showToast('Cảm ơn bạn đã vote!', 'success');
         }
+    })
+    .catch(err => {
+        console.error('Error voting:', err);
+        showToast('Lỗi khi vote: ' + err.message, 'danger');
     });
 }
 
@@ -616,12 +652,21 @@ function deleteComment(commentId) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error('Server error: ' + r.status);
+        return r.json();
+    })
     .then(data => {
         if (data.success) {
             document.getElementById('comment-' + commentId)?.remove();
             showToast('Đã xóa comment!', 'success');
+        } else {
+            showToast(data.error || 'Không thể xóa comment', 'danger');
         }
+    })
+    .catch(err => {
+        console.error('Error deleting comment:', err);
+        showToast('Lỗi khi xóa comment: ' + err.message, 'danger');
     });
 }
 
@@ -634,9 +679,21 @@ function deleteAttachment(attachId) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN)
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) throw new Error('Server error: ' + r.status);
+        return r.json();
+    })
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            showToast('Đã xóa file!', 'success');
+            location.reload();
+        } else {
+            showToast(data.error || 'Không thể xóa file', 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Error deleting attachment:', err);
+        showToast('Lỗi khi xóa file: ' + err.message, 'danger');
     });
 }
 
@@ -668,8 +725,27 @@ function handleFiles(files) {
     const btn  = document.getElementById('uploadBtn');
     if (!list) return;
 
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image', 'application/pdf', 'text'];
+    const validFiles = [];
+    
     list.innerHTML = '';
+    
     Array.from(files).slice(0, 5).forEach(file => {
+        // Validate file size
+        if (file.size > MAX_SIZE) {
+            showToast(`File "${file.name}" vượt quá 10MB`, 'warning');
+            return;
+        }
+        
+        // Validate file type
+        const fileType = file.type.split('/')[0];
+        if (!ALLOWED_TYPES.some(type => file.type.includes(type))) {
+            showToast(`File "${file.name}" không được hỗ trợ`, 'warning');
+            return;
+        }
+        
+        validFiles.push(file);
         const sizeKB = Math.round(file.size / 1024);
         const item   = document.createElement('div');
         item.className = 'attachment-item mt-1';
@@ -684,22 +760,77 @@ function handleFiles(files) {
         list.appendChild(item);
     });
 
-    if (files.length > 0) {
+    if (validFiles.length > 0) {
         btn?.classList.remove('d-none');
     }
 }
 
-// ── TOAST NOTIFICATION ──
+let toastCount = 0;
 function showToast(message, type = 'success') {
+    const typeMap = {'success': 'alert-success', 'danger': 'alert-danger', 'warning': 'alert-warning', 'info': 'alert-info'};
+    const alertClass = typeMap[type] || 'alert-info';
     const toast = document.createElement('div');
-    toast.className = `alert alert-${type} position-fixed shadow`;
-    toast.style.cssText = 'bottom:20px;right:20px;z-index:9999;min-width:280px;';
+    toast.className = `alert ${alertClass} position-fixed shadow`;
+    const offsetY = 20 + (toastCount * 80);
+    toast.style.cssText = `bottom:${offsetY}px;right:20px;z-index:${9999 + toastCount};min-width:280px;`;
     toast.innerHTML = `<i class="fa fa-check-circle me-2"></i>${message}`;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    toastCount++;
+    setTimeout(() => {toast.remove(); toastCount--;}, 3000);
 }
 
 function watchIssue() {
     showToast('Đang theo dõi issue này!', 'info');
+}
+
+// ── DELETE ISSUE ──
+function deleteIssue(bugId) {
+    if (!confirm('Bạn chắc chắn muốn xóa issue này? Hành động này không thể hoàn tác!')) return;
+
+    fetch(APP_URL + '/issues/' + ISSUE_KEY + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'csrf_token=' + encodeURIComponent(CSRF_TOKEN)
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('Server error: ' + r.status);
+        return r.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast('Đã xóa issue!', 'success');
+            setTimeout(() => window.location.href = APP_URL + '/projects', 1000);
+        } else {
+            showToast(data.error || 'Không thể xóa issue', 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Error deleting issue:', err);
+        showToast('Lỗi khi xóa issue: ' + err.message, 'danger');
+    });
+}
+
+function editComment(commentId) {
+    showToast('Chức năng chỉnh sửa comment sẽ được phát triển!', 'info');
+}
+
+function submitComment(e) {
+    const commentContent = document.getElementById('commentContent');
+    if (!commentContent.value.trim()) {
+        showToast('Vui lòng nhập comment!', 'warning');
+        e.preventDefault();
+        return false;
+    }
+    return true;
+}
+
+function submitAttachment(e) {
+    const fileList = document.getElementById('fileList');
+    if (!fileList || fileList.children.length === 0) {
+        showToast('Vui lòng chọn file!', 'warning');
+        e.preventDefault();
+        return false;
+    }
+    return true;
 }
 </script>
