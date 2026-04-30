@@ -483,4 +483,79 @@ class BugController extends BaseController {
         if (!empty($data['due_date']) && !strtotime($data['due_date']))
             $errors['due_date'] = 'Ngày hạn không hợp lệ';
 
-        if (!empty($data['esti
+        if (!empty($data['estimated_hours']) && !is_numeric($data['estimated_hours']))
+            $errors['estimated_hours'] = 'Số giờ ước tính phải là số';
+
+        return $errors;
+    }
+
+    private function detectChanges(array $old, array $new): array {
+        $watchFields = ['status','priority','assignee_id','title'];
+        $changes     = [];
+
+        foreach ($watchFields as $field) {
+            if (isset($old[$field], $new[$field])
+                && (string)$old[$field] !== (string)$new[$field]) {
+                $changes[$field] = [
+                    'old' => $old[$field],
+                    'new' => $new[$field],
+                ];
+            }
+        }
+
+        return $changes;
+    }
+
+    private function handleAttachments(int $bugId, array $files): int {
+        $attachModel = new AttachmentModel();
+        $uploaded    = 0;
+        $uploadDir   = ROOT_PATH . '/uploads/attachments/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $fileCount = count($files['name']);
+        $maxFiles  = 5;
+
+        for ($i = 0; $i < min($fileCount, $maxFiles); $i++) {
+            if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
+
+            $file = [
+                'name'     => $files['name'][$i],
+                'type'     => $files['type'][$i],
+                'tmp_name' => $files['tmp_name'][$i],
+                'error'    => $files['error'][$i],
+                'size'     => $files['size'][$i],
+            ];
+
+            $uploadErrors = validateUpload($file);
+            if ($uploadErrors) continue;
+
+            $filename = generateFilename($files['name'][$i]);
+
+            if (move_uploaded_file($files['tmp_name'][$i], $uploadDir . $filename)) {
+                $attachModel->create([
+                    'bug_id'        => $bugId,
+                    'user_id'       => $_SESSION['user_id'],
+                    'filename'      => 'attachments/' . $filename,
+                    'original_name' => $files['name'][$i],
+                    'file_size'     => $files['size'][$i],
+                    'mime_type'     => $files['type'][$i],
+                ]);
+                $uploaded++;
+            }
+        }
+
+        return $uploaded;
+    }
+
+    private function getLastBugNumber(int $projectId): int {
+        $db   = Database::getInstance();
+        $stmt = $db->prepare(
+            "SELECT COUNT(*) AS cnt FROM bugs WHERE project_id = ?"
+        );
+        $stmt->execute([$projectId]);
+        return (int) $stmt->fetch()['cnt'];
+    }
+}
