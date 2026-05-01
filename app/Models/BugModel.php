@@ -261,4 +261,61 @@ class BugModel extends BaseModel {
 
         return $prefix . '-' . str_pad($num, 3, '0', STR_PAD_LEFT);
     }
+
+    // ── Kanban: Lấy danh sách bug theo cột (status) ──────────────────
+    public function getKanbanColumn(int $projectId, string $status, array $filters = []): array {
+        $where  = ["b.project_id = ?", "b.status = ?"];
+        $params = [$projectId, $status];
+
+        if (!empty($filters['assignee_id'])) {
+            $where[]  = "b.assignee_id = ?";
+            $params[] = $filters['assignee_id'];
+        }
+        if (!empty($filters['priority'])) {
+            $where[]  = "b.priority = ?";
+            $params[] = $filters['priority'];
+        }
+        if (!empty($filters['sprint_id'])) {
+            $where[]  = "b.sprint_id = ?";
+            $params[] = $filters['sprint_id'];
+        }
+
+        $whereSQL = implode(' AND ', $where);
+
+        return $this->fetchAll(
+            "SELECT b.id, b.issue_key, b.title, b.type, b.status,
+                    b.priority, b.severity, b.due_date, b.estimated_hours,
+                    b.sprint_id,
+                    u.full_name AS assignee_name,
+                    u.avatar    AS assignee_avatar
+             FROM bugs b
+             LEFT JOIN users u ON u.id = b.assignee_id
+             WHERE {$whereSQL}
+             ORDER BY FIELD(b.priority,'critical','high','medium','low','trivial'), b.updated_at DESC",
+            $params
+        );
+    }
+
+    // ── Kanban: Cập nhật chỉ status ──────────────────────────────────
+    public function updateStatus(int $id, string $status): bool {
+        $resolvedAt = in_array($status, ['resolved', 'closed'])
+            ? ", resolved_at = COALESCE(resolved_at, NOW())"
+            : ", resolved_at = NULL";
+
+        return $this->execute(
+            "UPDATE bugs SET status = ? {$resolvedAt} WHERE id = ?",
+            [$status, $id]
+        ) > 0;
+    }
+
+    // ── Sprint: Chuyển issue chưa done về backlog ────────────────────
+    public function moveUnfinishedToBacklog(int $sprintId): void {
+        $this->execute(
+            "UPDATE bugs
+             SET sprint_id = NULL
+             WHERE sprint_id = ?
+               AND status NOT IN ('resolved','closed')",
+            [$sprintId]
+        );
+    }
 }

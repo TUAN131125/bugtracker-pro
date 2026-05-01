@@ -70,6 +70,36 @@ class Router {
         // ── Delete actions ──
         $this->add('POST', '/comments/:id/delete',      'BugController', 'deleteComment');
         $this->add('POST', '/attachments/:id/delete',   'BugController', 'deleteAttachment');
+
+        // ── Kanban Board ──
+        $this->add('GET',  '/projects/:key/board',               'KanbanController', 'board');
+        $this->add('POST', '/projects/:key/board/move',          'KanbanController', 'moveCard');
+
+        // ── Quick-view popup ──
+        $this->add('GET',  '/issues/:key/quickview',             'KanbanController', 'quickView');
+
+        // ── Sprint Board ──
+        $this->add('GET',  '/projects/:key/sprint',              'KanbanController', 'sprintBoard');
+        $this->add('POST', '/projects/:key/sprint/create',       'KanbanController', 'createSprint');
+        $this->add('POST', '/projects/:key/sprint/:id/start',    'KanbanController', 'startSprint');
+        $this->add('POST', '/projects/:key/sprint/:id/complete', 'KanbanController', 'completeSprint');
+        $this->add('POST', '/projects/:key/sprint/assign-issue', 'KanbanController', 'assignIssue');
+
+        // Notifications
+        $this->add('GET',  '/notifications',            'NotificationController', 'index');
+        $this->add('GET',  '/notifications/read-all',   'NotificationController', 'readAll');
+        $this->add('GET',  '/notifications/read/:id',   'NotificationController', 'read');
+
+        // Search
+        $this->add('GET',  '/api/search',               'SearchController',       'search');
+
+        //Report
+        $this->add('GET', '/reports', 'ReportController', 'index');
+
+        // Labels
+        $this->add('GET',  '/projects/:key/labels',        'LabelController', 'index');
+        $this->add('POST', '/projects/:key/labels',        'LabelController', 'create');
+        $this->add('POST', '/projects/:key/labels/:id/delete', 'LabelController', 'delete');
     }
 
     private function add(string $method, string $path, string $controller, string $action): void {

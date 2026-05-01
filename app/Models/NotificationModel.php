@@ -38,4 +38,39 @@ class NotificationModel extends BaseModel {
             [$userId]
         );
     }
+
+    public function getPaginated(int $userId, int $limit, int $offset): array {
+        return $this->fetchAll(
+            "SELECT * FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?",
+            [$userId, $limit, $offset]
+        );
+    }
+
+    // Đếm tổng
+    public function countAll(int $userId): int {
+        $row = $this->fetchOne(
+            "SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ?",
+            [$userId]
+        );
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    // Tìm theo ID
+    public function findById(int $id): array|false {
+        return $this->fetchOne(
+            "SELECT * FROM notifications WHERE id = ? LIMIT 1",
+            [$id]
+        );
+    }
+
+    // Đánh dấu 1 đã đọc
+    public function markRead(int $id): void {
+        $this->execute(
+            "UPDATE notifications SET is_read = 1 WHERE id = ?",
+            [$id]
+        );
+    }
 }

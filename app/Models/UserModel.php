@@ -35,15 +35,20 @@ class UserModel extends BaseModel {
 
     // Tạo user mới — trả về ID
     public function create(array $data): int {
+        // Role mặc định là 'manager' nếu tự đăng ký
+        // (người tự đăng ký = owner workspace = có quyền tạo project)
+        $role = $data['role'] ?? 'manager';
+
         return $this->insert(
             "INSERT INTO users
                 (username, email, password_hash, full_name, role, is_active, email_verified)
-             VALUES (?, ?, ?, ?, 'developer', 1, 0)",
+            VALUES (?, ?, ?, ?, ?, 1, 0)",
             [
                 $data['username'],
                 $data['email'],
                 password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]),
                 $data['full_name'],
+                $role,
             ]
         );
     }

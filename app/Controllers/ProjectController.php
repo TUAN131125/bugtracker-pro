@@ -23,7 +23,7 @@ class ProjectController extends BaseController {
 
     // Form tạo project mới
     public function createForm(): void {
-        $this->requireRole('admin', 'manager');
+        $this->requireAuth();
 
         $this->view('projects/create', [
             'title'      => 'Tạo dự án mới',
@@ -36,7 +36,7 @@ class ProjectController extends BaseController {
 
     // Xử lý tạo project
     public function create(): void {
-        $this->requireRole('admin', 'manager');
+        $this->requireAuth(); 
         $this->verifyCsrf();
 
         $name        = trim($this->post('name', ''));

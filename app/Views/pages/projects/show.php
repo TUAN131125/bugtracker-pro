@@ -27,10 +27,20 @@ $totalBugs  = $totalBugs  ?? 0;
         </h4>
         <small class="text-muted"><?= e($project['description'] ?? '') ?></small>
     </div>
-    <a href="<?= APP_URL ?>/projects/<?= e(strtolower($project['key'])) ?>/issues/new"
-       class="btn btn-primary btn-sm fw-bold">
-        <i class="fa fa-plus me-1"></i>Tạo Issue
-    </a>
+    <div class="d-flex gap-2">
+        <a href="<?= APP_URL ?>/projects/<?= e(strtolower($project['key'])) ?>/board"
+           class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-columns me-1"></i>Kanban
+        </a>
+        <a href="<?= APP_URL ?>/projects/<?= e(strtolower($project['key'])) ?>/sprint"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-rocket me-1"></i>Sprint
+        </a>
+        <a href="<?= APP_URL ?>/projects/<?= e(strtolower($project['key'])) ?>/issues/new"
+           class="btn btn-primary btn-sm fw-bold">
+            <i class="fa fa-plus me-1"></i>Tạo Issue
+        </a>
+    </div>
 </div>
 
 <!-- Quick stats -->
