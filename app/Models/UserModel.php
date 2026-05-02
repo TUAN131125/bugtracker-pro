@@ -94,4 +94,90 @@ class UserModel extends BaseModel {
         );
         return (bool) $row;
     }
+
+    // ── Admin methods ─────────────────────────────────────────────
+
+    public function count(): int {
+        $row = $this->fetchOne("SELECT COUNT(*) AS cnt FROM users", []);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    public function countActive(): int {
+        $row = $this->fetchOne("SELECT COUNT(*) AS cnt FROM users WHERE is_active = 1", []);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    public function getRecent(int $limit = 5): array {
+        return $this->fetchAll(
+            "SELECT id, username, email, full_name, role, is_active, avatar, created_at
+             FROM users ORDER BY created_at DESC LIMIT ?",
+            [$limit]
+        );
+    }
+
+    public function paginate(int $page, int $perPage, array $filters = []): array {
+        $where  = ['1=1'];
+        $params = [];
+
+        if (!empty($filters['search'])) {
+            $where[]  = "(full_name LIKE ? OR email LIKE ? OR username LIKE ?)";
+            $term     = '%' . $filters['search'] . '%';
+            $params   = array_merge($params, [$term, $term, $term]);
+        }
+        if (!empty($filters['role'])) {
+            $where[]  = "role = ?";
+            $params[] = $filters['role'];
+        }
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $where[]  = "is_active = ?";
+            $params[] = (int)$filters['status'];
+        }
+
+        $whereSQL = implode(' AND ', $where);
+        $offset   = ($page - 1) * $perPage;
+
+        $totalRow = $this->fetchOne(
+            "SELECT COUNT(*) AS cnt FROM users WHERE {$whereSQL}", $params
+        );
+        $total = (int)($totalRow['cnt'] ?? 0);
+
+        $data = $this->fetchAll(
+            "SELECT id, username, email, full_name, role, is_active, avatar, created_at, last_login
+             FROM users WHERE {$whereSQL}
+             ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            array_merge($params, [$perPage, $offset])
+        );
+
+        return [
+            'data'       => $data,
+            'pagination' => [
+                'total'       => $total,
+                'per_page'    => $perPage,
+                'current'     => $page,
+                'total_pages' => max(1, (int)ceil($total / $perPage)),
+            ],
+        ];
+    }
+
+    public function setActive(int $userId, int $status): void {
+        $this->execute("UPDATE users SET is_active = ? WHERE id = ?", [$status, $userId]);
+    }
+
+    public function setRole(int $userId, string $role): void {
+        $this->execute("UPDATE users SET role = ? WHERE id = ?", [$role, $userId]);
+    }
+
+    public function adminCreate(array $data): int {
+        return $this->insert(
+            "INSERT INTO users (username, email, password_hash, full_name, role, is_active, email_verified)
+             VALUES (?, ?, ?, ?, ?, 1, 1)",
+            [
+                $data['username'],
+                $data['email'],
+                password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]),
+                $data['full_name'],
+                $data['role'] ?? 'developer',
+            ]
+        );
+    }
 }

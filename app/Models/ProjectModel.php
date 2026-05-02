@@ -155,4 +155,9 @@ class ProjectModel extends BaseModel {
             [$projectId]
         ) ?: [];
     }
+
+    public function countAll(): int {
+        $row = $this->fetchOne("SELECT COUNT(*) AS cnt FROM projects", []);
+        return (int)($row['cnt'] ?? 0);
+    }
 }

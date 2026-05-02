@@ -100,6 +100,40 @@ class Router {
         $this->add('GET',  '/projects/:key/labels',        'LabelController', 'index');
         $this->add('POST', '/projects/:key/labels',        'LabelController', 'create');
         $this->add('POST', '/projects/:key/labels/:id/delete', 'LabelController', 'delete');
+
+        // ── Profile & Settings ──
+        $this->add('GET',  '/profile',                           'ProfileController', 'index');
+        $this->add('POST', '/profile/update',                    'ProfileController', 'update');
+        $this->add('POST', '/profile/password',                  'ProfileController', 'changePassword');
+        $this->add('POST', '/profile/theme',                     'ProfileController', 'toggleTheme');
+        $this->add('GET',  '/settings',                          'ProfileController', 'settings');
+        $this->add('POST', '/settings/save',                     'ProfileController', 'saveSettings');
+
+        // ── Admin Panel ──
+        $this->add('GET',  '/admin',                             'AdminController', 'index');
+        $this->add('GET',  '/admin/users',                       'AdminController', 'users');
+        $this->add('POST', '/admin/users/create',                'AdminController', 'createUser');
+        $this->add('POST', '/admin/users/:id/toggle',            'AdminController', 'toggleUser');
+        $this->add('POST', '/admin/users/:id/role',              'AdminController', 'changeRole');
+        $this->add('GET',  '/admin/settings',                    'AdminController', 'siteSettings');
+        $this->add('POST', '/admin/settings/smtp',               'AdminController', 'saveSmtp');
+        $this->add('POST', '/admin/settings/test-smtp',          'AdminController', 'testSmtp');
+
+        // Project Settings
+        $this->add('GET',  '/projects/:key/settings',              'ProjectController', 'settings');
+        $this->add('POST', '/projects/:key/settings',              'ProjectController', 'saveSettings');
+        $this->add('POST', '/projects/:key/delete',                'ProjectController', 'delete');
+
+        // Member management
+        $this->add('POST', '/projects/:key/members/invite',        'ProjectController', 'inviteMember');
+        $this->add('POST', '/projects/:key/members/:id/role',      'ProjectController', 'updateMemberRole');
+        $this->add('POST', '/projects/:key/members/:id/remove',    'ProjectController', 'removeMember');
+
+        // User Profile & Settings
+        $this->add('GET',  '/profile',          'UserController', 'profile');
+        $this->add('POST', '/profile/update',   'UserController', 'updateProfile');
+        $this->add('GET',  '/settings',         'UserController', 'settings');
+        $this->add('POST', '/settings/password','UserController', 'updatePassword');
     }
 
     private function add(string $method, string $path, string $controller, string $action): void {

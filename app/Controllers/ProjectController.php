@@ -193,4 +193,95 @@ class ProjectController extends BaseController {
         flashMessage('success', "Đã xóa dự án <strong>{$project['name']}</strong>.");
         $this->redirect('/projects');
     }
+
+    // Mời thành viên vào project
+    public function inviteMember(string $key): void {
+        $this->requireAuth();
+        $this->verifyCsrf();
+
+        $project = $this->projectModel->findByKey($key);
+        if (!$project) { http_response_code(404); die(); }
+
+        $input = trim($this->post('invite_input', ''));
+        $role  = $this->post('invite_role', 'developer');
+
+        // Tìm user theo email hoặc username
+        $userModel = new UserModel();
+        $user = filter_var($input, FILTER_VALIDATE_EMAIL)
+            ? $userModel->findByEmail($input)
+            : $userModel->findByUsername(ltrim($input, '@'));
+
+        if (!$user) {
+            flashMessage('danger', "Không tìm thấy user: <strong>{$input}</strong>");
+            $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+        }
+
+        if ($this->projectModel->isMember($project['id'], $user['id'])) {
+            flashMessage('warning', 'User này đã là thành viên của dự án.');
+            $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+        }
+
+        $this->projectModel->addMember($project['id'], $user['id'], $role);
+
+        // Gửi notification
+        $notifModel = new NotificationModel();
+        $notifModel->create(
+            $user['id'],
+            'project_invited',
+            'Bạn được thêm vào dự án ' . $project['name'],
+            'Với vai trò: ' . $role,
+            '/projects/' . strtolower($key)
+        );
+
+        flashMessage('success', "<strong>{$user['full_name']}</strong> đã được thêm vào dự án!");
+        $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+    }
+
+    // Đổi role thành viên
+    public function updateMemberRole(string $key, int $userId): void {
+        $this->requireRole('admin', 'manager');
+        $this->verifyCsrf();
+
+        $project = $this->projectModel->findByKey($key);
+        if (!$project) { http_response_code(404); die(); }
+
+        $role = $this->post('role', 'developer');
+        if (!in_array($role, ['admin','manager','developer','reporter','viewer'])) {
+            $role = 'developer';
+        }
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare(
+            "UPDATE project_members SET role = ?
+            WHERE project_id = ? AND user_id = ?"
+        );
+        $stmt->execute([$role, $project['id'], $userId]);
+
+        flashMessage('success', 'Đã cập nhật role thành viên.');
+        $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+    }
+
+    // Xóa thành viên khỏi project
+    public function removeMember(string $key, int $userId): void {
+        $this->requireRole('admin', 'manager');
+        $this->verifyCsrf();
+
+        $project = $this->projectModel->findByKey($key);
+        if (!$project) { http_response_code(404); die(); }
+
+        // Không cho xóa owner
+        if ($userId == $project['owner_id']) {
+            flashMessage('danger', 'Không thể xóa owner khỏi dự án.');
+            $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+        }
+
+        $db   = Database::getInstance();
+        $stmt = $db->prepare(
+            "DELETE FROM project_members WHERE project_id = ? AND user_id = ?"
+        );
+        $stmt->execute([$project['id'], $userId]);
+
+        flashMessage('success', 'Đã xóa thành viên khỏi dự án.');
+        $this->redirect('/projects/' . strtolower($key) . '/settings#members');
+    }
 }

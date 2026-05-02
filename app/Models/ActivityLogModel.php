@@ -51,4 +51,18 @@ class ActivityLogModel extends BaseModel {
             [$bugId]
         );
     }
+
+    // Lấy activity của 1 user (dùng cho profile page)
+    public function getByUser(int $userId, int $limit = 20): array {
+        return $this->fetchAll(
+            "SELECT al.*, b.issue_key, b.title AS bug_title, p.name AS project_name
+             FROM activity_log al
+             LEFT JOIN bugs b ON b.id = al.bug_id
+             LEFT JOIN projects p ON p.id = al.project_id
+             WHERE al.user_id = ?
+             ORDER BY al.created_at DESC
+             LIMIT ?",
+            [$userId, $limit]
+        );
+    }
 }

@@ -311,6 +311,18 @@ class AuthController extends BaseController {
     public function loginForm(): void {
         if (!empty($_SESSION['user_id'])) $this->redirect('/dashboard');
 
+        // Hiện thông báo nếu session expired hoặc bị kick vì security
+        if (isset($_GET['expired'])) {
+            $_SESSION['login_errors'] = [
+                'general' => '⏰ Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.'
+            ];
+        }
+        if (isset($_GET['security'])) {
+            $_SESSION['login_errors'] = [
+                'general' => '🔒 Phát hiện bất thường bảo mật. Vui lòng đăng nhập lại.'
+            ];
+        }
+
         // Tạo captcha số cho login
         $n1 = rand(1, 9);
         $n2 = rand(1, 9);
