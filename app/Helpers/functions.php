@@ -187,4 +187,89 @@ function slugify(string $text): string {
     $text = preg_replace('/[^a-z0-9\s-]/', '', $text);
     $text = preg_replace('/[\s-]+/', '-', trim($text));
     return $text;
+
+    // ── SECURITY HELPERS ──
+
+    // Output an toàn cho attribute HTML
+    function eAttr(string $str): string {
+        return htmlspecialchars($str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    // Output an toàn cho JavaScript string
+    function eJs(string $str): string {
+        return json_encode($str, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
+    }
+
+    // Validate và sanitize URL redirect (chống Open Redirect)
+    function safeRedirectUrl(string $url): string {
+        // Chỉ cho phép relative URLs
+        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+            return $url;
+        }
+        return '/dashboard'; // fallback an toàn
+    }
+
+    // Kiểm tra file upload an toàn hơn
+    function validateUploadStrict(array $file): array {
+        $errors = [];
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = match($file['error']) {
+                UPLOAD_ERR_INI_SIZE   => 'File vượt quá kích thước cho phép của server',
+                UPLOAD_ERR_FORM_SIZE  => 'File vượt quá kích thước cho phép của form',
+                UPLOAD_ERR_PARTIAL    => 'File chỉ được upload một phần',
+                UPLOAD_ERR_NO_FILE    => 'Không có file nào được upload',
+                default               => 'Lỗi upload không xác định',
+            };
+            return $errors;
+        }
+
+        // Kiểm tra kích thước
+        if ($file['size'] > UPLOAD_MAX_SIZE) {
+            $errors[] = 'File vượt quá ' . (UPLOAD_MAX_SIZE / 1048576) . 'MB';
+        }
+
+        // Kiểm tra MIME type thực tế bằng finfo (không tin vào $_FILES['type'])
+        $finfo    = new finfo(FILEINFO_MIME_TYPE);
+        $realMime = $finfo->file($file['tmp_name']);
+
+        if (!in_array($realMime, ALLOWED_MIME_TYPES)) {
+            $errors[] = "Loại file không được phép: {$realMime}";
+        }
+
+        // Kiểm tra extension
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'txt', 'log'];
+        if (!in_array($ext, $allowedExts)) {
+            $errors[] = "Đuôi file .{$ext} không được phép";
+        }
+
+        // Kiểm tra file không chứa PHP code (bảo mật thêm)
+        $content = file_get_contents($file['tmp_name'], false, null, 0, 512);
+        if (str_contains($content, '<?php') || str_contains($content, '<?=')) {
+            $errors[] = 'File chứa nội dung không hợp lệ';
+        }
+
+        return $errors;
+    }
+
+    // Rate limiting đơn giản dùng DB
+    function checkRateLimit(string $key, int $maxAttempts, int $decaySeconds): bool {
+        // Lưu vào session thay vì DB (đơn giản hơn cho InfinityFree)
+        $sessionKey = 'rate_' . md5($key);
+        $now        = time();
+
+        if (!isset($_SESSION[$sessionKey])) {
+            $_SESSION[$sessionKey] = ['count' => 0, 'reset_at' => $now + $decaySeconds];
+        }
+
+        // Reset nếu đã qua thời gian
+        if ($_SESSION[$sessionKey]['reset_at'] <= $now) {
+            $_SESSION[$sessionKey] = ['count' => 0, 'reset_at' => $now + $decaySeconds];
+        }
+
+        $_SESSION[$sessionKey]['count']++;
+
+        return $_SESSION[$sessionKey]['count'] <= $maxAttempts;
+    }
 }

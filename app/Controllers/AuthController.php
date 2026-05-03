@@ -146,6 +146,7 @@ class AuthController extends BaseController {
             'password'  => $_SESSION['reg_step1']['password'],
             'username'  => $username,
             'full_name' => $fullName,
+            'role'      => 'manager', // mặc định role manager cho user tự đăng ký (có quyền tạo project)
         ]);
 
         if ($avatarPath) {
@@ -309,6 +310,18 @@ class AuthController extends BaseController {
 
     public function loginForm(): void {
         if (!empty($_SESSION['user_id'])) $this->redirect('/dashboard');
+
+        // Hiện thông báo nếu session expired hoặc bị kick vì security
+        if (isset($_GET['expired'])) {
+            $_SESSION['login_errors'] = [
+                'general' => '⏰ Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.'
+            ];
+        }
+        if (isset($_GET['security'])) {
+            $_SESSION['login_errors'] = [
+                'general' => '🔒 Phát hiện bất thường bảo mật. Vui lòng đăng nhập lại.'
+            ];
+        }
 
         // Tạo captcha số cho login
         $n1 = rand(1, 9);
@@ -531,7 +544,6 @@ class AuthController extends BaseController {
 
     // Tạo session sau khi đăng nhập thành công
     private function loginUserById(int $userId, bool $remember = false): void {
-        // Bắt buộc để tránh session fixation attack
         session_regenerate_id(true);
 
         $user = $this->userModel->findById($userId);
@@ -543,11 +555,26 @@ class AuthController extends BaseController {
         $_SESSION['user_role']  = $user['role'];
         $_SESSION['user_avatar']= $user['avatar'];
 
-        // Remember me — lưu cookie 30 ngày
+        // ── THÊM ĐOẠN NÀY ── lấy workspace đầu tiên của user
+        $wsModel   = new WorkspaceModel();
+        $workspaces = $wsModel->findByOwner($userId);
+        if (!empty($workspaces)) {
+            $_SESSION['workspace_id'] = $workspaces[0]['id'];
+        } else {
+            // Kiểm tra workspace được member (không phải owner)
+            $db  = Database::getInstance();
+            $stmt = $db->prepare(
+                "SELECT workspace_id FROM workspace_members
+                WHERE user_id = ? LIMIT 1"
+            );
+            $stmt->execute([$userId]);
+            $row = $stmt->fetch();
+            $_SESSION['workspace_id'] = $row['workspace_id'] ?? 1;
+        }
+
         if ($remember) {
             $token = bin2hex(random_bytes(32));
             setcookie('remember_token', $token, time() + 2592000, '/', '', false, true);
-            // TODO ngày 3: lưu token vào bảng remember_tokens
         }
     }
 
